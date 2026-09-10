@@ -22,5 +22,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  test:
+    build:
+      context: ./app
+    command: pytest
+    depends_on:
+      - postgres
+
 volumes:
   postgres_data:
