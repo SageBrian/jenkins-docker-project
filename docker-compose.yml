@@ -7,7 +7,8 @@ services:
       - "8000:8000"
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:16
@@ -21,13 +22,32 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devops -d tasks"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   test:
     build:
       context: ./app
     command: pytest
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+
+  jenkins:
+    build:
+      context: ./jenkins
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  jenkins_home:
